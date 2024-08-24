@@ -110,17 +110,17 @@ def GD(params, bias, samples, y, alpha):
     # Compute the predictions for all samples
     predictions = h(params, bias, samples)
 
-    # Compute the losses
-    losses = predictions - y
+    # Compute the errors
+    errors = predictions - y
 
     # Compute the gradient for the parameters
-    gradient = np.dot(samples.T, losses) / len(samples)
+    gradient = np.dot(samples.T, errors) / len(samples)
 
     # Update the parameters
     params = params - alpha * gradient
 
     # Update the bias
-    bias = bias - alpha * np.mean(losses)
+    bias = bias - alpha * np.mean(errors)
 
     return params, bias
 
@@ -129,39 +129,39 @@ def compute_loss(params, bias, samples, y):
     # Compute the predictions for all samples
     predictions = h(params, bias, samples)
 
-    # Compute the cross-entropy loss
+    # Compute the cross-entropy error
     epsilon = 1e-15  # To avoid log(0)
     predictions = np.clip(predictions, epsilon, 1 - epsilon)
-    loss = -np.mean(y * np.log(predictions) + (1 - y) * np.log(1 - predictions))
+    error = -np.mean(y * np.log(predictions) + (1 - y) * np.log(1 - predictions))
 
-    return loss
+    return error
 
 
 def train(params, samples, y, alpha=0.01, max_epochs=1000):
-    losses = []
+    errors = []
     epochs = 0
     bias = 0.0  # Initialize bias
-    loss = float("inf")  # Initialize loss to a large value
+    error = float("inf")  # Initialize error to a large value
 
-    while loss > 0.01 and epochs < max_epochs:
+    while error > 0.01 and epochs < max_epochs:
         params, bias = GD(params, bias, samples, y, alpha)
-        loss = compute_loss(params, bias, samples, y)
-        losses.append(loss)
+        error = compute_loss(params, bias, samples, y)
+        errors.append(error)
         epochs += 1
 
     print("Training finished in", epochs, "epochs")
-    return params, bias, losses
+    return params, bias, errors
 
 
 x_train_np = df_x_train_scaled.to_numpy()
 y_train_np = y_train.to_numpy()
 num_params = x_train_np.shape[1]  # Number of features
 params = np.ones(num_params)
-params, bias, losses = train(params, x_train_np, y_train_np, 0.1, 10000)
+params, bias, errors = train(params, x_train_np, y_train_np, 0.1, 10000)
 
 
 # Error plot
-plt.plot(losses)
+plt.plot(errors)
 plt.xlabel("Epoch")
 plt.ylabel("Error")
 plt.title("Training Error. lr = 0.1")
@@ -173,9 +173,9 @@ def test(params, bias, samples, y):
 
     predictions = np.array([h(params, bias, sample) for sample in samples])
 
-    loss = compute_loss(params, bias, samples, y)
+    error = compute_loss(params, bias, samples, y)
 
-    return predictions, loss
+    return predictions, error
 
 
 y_test_np = y_test.to_numpy()
